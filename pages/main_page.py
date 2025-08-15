@@ -1,37 +1,19 @@
-import allure
-from .base_page import BasePage
-from locators import MainPageLocators
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-class MainPage(BasePage):
 
-    @allure.step("Открыть главную страницу")
-    def open_main_page(self, url):
-        self.open(url)
+class MainPage:
+    def __init__(self, driver):
+        self.driver = driver
+        self.wait = WebDriverWait(driver, 10)
 
-    @allure.step("Клик по верхней кнопке 'Заказать'")
-    def click_top_order_button(self):
-        self.click(MainPageLocators.TOP_ORDER_BUTTON)
+    # Локаторы
+    FAQ_QUESTION = lambda self, index: (By.ID, f"accordion__heading-{index-1}")
+    FAQ_ANSWER = lambda self, index: (By.ID, f"accordion__panel-{index-1}")
+    LOGO_SCOOTER = (By.CLASS_NAME, "Header_LogoScooter__3lsAR")
+    LOGO_YANDEX = (By.CLASS_NAME, "Header_LogoYandex__3TSOI")
+    TOP_ORDER_BUTTON = (By.XPATH, "//button[text()='Заказать' and not(ancestor::div[contains(@class,'middle'))]]")
+    BOTTOM_ORDER_BUTTON = (By.XPATH, "//button[text()='Заказать' and ancestor::div[contains(@class,'middle')]]")
 
-    @allure.step("Клик по нижней кнопке 'Заказать'")
-    def click_bottom_order_button(self):
-        self.click(MainPageLocators.BOTTOM_ORDER_BUTTON)
-
-    @allure.step("Прокрутить страницу до нижней кнопки 'Заказать'")
-    def scroll_to_bottom_order_button(self):
-        self.scroll_to_element(MainPageLocators.BOTTOM_ORDER_BUTTON)
-
-    @allure.step("Получение списка вопросов FAQ")
-    def get_faq_questions(self):
-        return self.get_elements(MainPageLocators.FAQ_QUESTIONS)
-
-    @allure.step("Получение списка ответов FAQ")
-    def get_faq_answers(self):
-        return self.get_elements(MainPageLocators.FAQ_ANSWERS)
-
-    @allure.step("Клик по логотипу 'Самокат'")
-    def click_logo_scooter(self):
-        self.click(MainPageLocators.LOGO_SCOOTER)
-
-    @allure.step("Клик по логотипу 'Яндекс'")
-    def click_logo_yandex(self):
-        self.click(MainPageLocators.LOGO_YANDEX)
+    # Д

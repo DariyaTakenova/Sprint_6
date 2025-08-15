@@ -1,35 +1,48 @@
-import allure
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from .base_page import BasePage
-from locators import OrderPageLocators
 
-class OrderPage(BasePage):
 
-    @allure.step("Заполнить персональные данные")
+class OrderPage:
+    def __init__(self, driver):
+        self.driver = driver
+        self.wait = WebDriverWait(driver, 10)
+
+    # Локаторы
+    FIRST_NAME = (By.XPATH, "//input[@placeholder='* Имя']")
+    LAST_NAME = (By.XPATH, "//input[@placeholder='* Фамилия']")
+    ADDRESS = (By.XPATH, "//input[@placeholder='* Адрес: куда привезти заказ']")
+    METRO_STATION = (By.CLASS_NAME, "select-search__input")
+    PHONE = (By.XPATH, "//input[@placeholder='* Телефон: на него позвонит курьер']")
+    NEXT_BUTTON = (By.XPATH, "//button[text()='Далее']")
+    DELIVERY_DATE = (By.XPATH, "//input[@placeholder='* Когда привезти самокат']")
+    RENTAL_PERIOD_DROPDOWN = (By.CLASS_NAME, "Dropdown-placeholder")
+    RENTAL_PERIOD_OPTION = lambda self, text: (By.XPATH, f"//div[@class='Dropdown-menu']//div[text()='{text}']")
+    COLOR_CHECKBOX = lambda self, color: (By.ID, f"{color}")
+    COMMENT = (By.XPATH, "//input[@placeholder='Комментарий для курьера']")
+    ORDER_CONFIRM_BUTTON = (By.XPATH, "//button[text()='Заказать' and ancestor::div[contains(@class,'Order_Buttons')]]")
+    YES_BUTTON = (By.XPATH, "//button[text()='Да']")
+    SUCCESS_MODAL = (By.CLASS_NAME, "Order_Modal__content")
+
+    # Методы
     def fill_personal_info(self, data):
-        self.input_text(OrderPageLocators.FIRST_NAME, data["first_name"])
-        self.input_text(OrderPageLocators.LAST_NAME, data["last_name"])
-        self.input_text(OrderPageLocators.ADDRESS, data["address"])
+        self.wait.until(EC.element_to_be_clickable(self.FIRST_NAME)).send_keys(data["first_name"])
+        self.driver.find_element(*self.LAST_NAME).send_keys(data["last_name"])
+        self.driver.find_element(*self.ADDRESS).send_keys(data["address"])
+        self.driver.find_element(*self.METRO_STATION).send_keys(data["metro"])
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, f"//div[text()='{data['metro']}']"))).click()
+        self.driver.find_element(*self.PHONE).send_keys(data["phone"])
+        self.driver.find_element(*self.NEXT_BUTTON).click()
 
-        self.click(OrderPageLocators.METRO_FIELD)
-
-        # Выбрать станцию метро из списка
-        metro_option = (By.XPATH, f"//div[contains(@class, 'select-search__select')]//div[text()='{data['metro']}']")
-        self.wait.until(EC.element_to_be_clickable(metro_option)).click()
-
-        self.input_text(OrderPageLocators.PHONE, data["phone"])
-        self.click(OrderPageLocators.NEXT_BUTTON)
-
-    @allure.step("Заполнить данные о самокате")
     def fill_scooter_info(self, data):
-        self.input_text(OrderPageLocators.DATE_FIELD, data["date"])
-        # Выбираем цвет чёрный (можно расширить, если надо)
-        self.click(OrderPageLocators.SCOOTER_COLOR_BLACK)
-        self.input_text(OrderPageLocators.COMMENT, data["comment"])
-        self.click(OrderPageLocators.ORDER_BUTTON)
-        self.click(OrderPageLocators.CONFIRM_BUTTON)
+        self.driver.find_element(*self.DELIVERY_DATE).send_keys(data["date"])
+        self.driver.find_element(*self.RENTAL_PERIOD_DROPDOWN).click()
+        self.wait.until(EC.element_to_be_clickable(self.RENTAL_PERIOD_OPTION(data["rental_period"]))).click()
+        self.driver.find_element(*self.COLOR_CHECKBOX(data["color"])).click()
+        if data.get("comment"):
+            self.driver.find_element(*self.COMMENT).send_keys(data["comment"])
+        self.driver.find_element(*self.ORDER_CONFIRM_BUTTON).click()
+        self.wait.until(EC.element_to_be_clickable(self.YES_BUTTON)).click()
 
-    @allure.step("Проверить, что модальное окно с подтверждением заказа отображается")
     def is_success_modal_visible(self):
-        return "Заказ оформлен" in self.get_element(OrderPageLocators.SUCCESS_MODAL).text
+        return self.wait.until(EC.visibility_of_element_located(self.SUCCESS_MODAL)).is_displayed()
